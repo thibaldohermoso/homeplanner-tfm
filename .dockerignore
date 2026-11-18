@@ -1,0 +1,18 @@
+node_modules
+.next
+.pnpm-store
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+*.log
+coverage
+out
+.vercel
+.docx_assets
+.docx_render
+"TFM - HomePlanner"
+docs
+README.md
+*.docx

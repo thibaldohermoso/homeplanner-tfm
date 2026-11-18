@@ -1,0 +1,22 @@
+.next/
+node_modules/
+out/
+.env
+.env.*
+!.env.example
+*.log
+.docx_assets/
+.docx_render/
+.pnpm-store/
+.vercel/
+coverage/
+.DS_Store
+*.tsbuildinfo
+
+# Supabase local development
+supabase/.branches/
+supabase/.temp/
+
+# Repo placeholder created in a nested folder; the project root is canonical
+TFM - HomePlanner/
+
