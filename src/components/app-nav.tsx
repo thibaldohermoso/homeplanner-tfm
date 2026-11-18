@@ -24,6 +24,7 @@ export function AppNav() {
           <Link className={pathname === "/register" ? "nav-link active" : "nav-link"} href="/register">Crear cuenta</Link>
         </> : <>
           <Link className={pathname === "/dashboard" ? "nav-link active" : "nav-link"} href="/dashboard">Dashboard</Link>
+          <Link className={pathname === "/tasks" ? "nav-link active" : "nav-link"} href="/tasks">Tareas</Link>
           <Link className={pathname === "/onboarding" ? "nav-link active" : "nav-link"} href="/onboarding">Mi hogar</Link>
           <button className="button button-quiet nav-logout" onClick={handleLogout}>Cerrar sesión</button>
         </>}
