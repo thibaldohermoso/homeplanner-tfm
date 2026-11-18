@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { getHouseholds } from "@/lib/services/households";
-import { AppNav } from "@/components/app-nav";
+import { AppNav, MealsLink } from "@/components/app-nav";
 
 type Household = { id: string; name: string; invite_code: string; created_by: string };
 type Member = { user_id: string; role: "owner" | "member"; profiles?: { display_name: string }[] | null };
@@ -47,9 +47,9 @@ export function Dashboard() {
   if (!household) return null;
 
   return <>
-    <><AppNav /><main className="shell page"><div className="page-header"><div><p className="eyebrow">Tu hogar</p><h1>{household.name}</h1><p className="muted">Una vista rápida de lo que necesita atención.</p></div><div className="avatar">{(email[0] ?? "U").toUpperCase()}</div></div>
+    <><AppNav /><main className="shell page"><div className="page-header"><div><p className="eyebrow">Tu hogar</p><h1>{household.name}</h1><p className="muted">Una vista rápida de lo que necesita atención.</p></div><div className="topbar-actions"><MealsLink /><div className="avatar">{(email[0] ?? "U").toUpperCase()}</div></div></div>
       <div className="grid stats-grid"><div className="stat-card"><span className="stat-label">Tareas pendientes</span><strong className="stat-value">{stats.tasks}</strong></div><div className="stat-card"><span className="stat-label">Artículos por comprar</span><strong className="stat-value">{stats.shopping}</strong></div><div className="stat-card"><span className="stat-label">Gastos registrados</span><strong className="stat-value">{stats.expenses}</strong></div><div className="stat-card"><span className="stat-label">Próximos eventos</span><strong className="stat-value">{stats.events}</strong></div></div>
       <div className="grid content-grid"><section className="panel"><div className="panel-header"><div><h2>Miembros del hogar</h2><p className="muted" style={{ marginBottom: 0 }}>Personas con acceso compartido.</p></div><span className="muted">{members.length}</span></div><div className="member-list">{members.map((member) => { const displayName = member.profiles?.[0]?.display_name ?? "Usuario"; return <div className="member" key={member.user_id}><div className="avatar">{(displayName[0] ?? "U").toUpperCase()}</div><div><strong>{displayName}</strong><small>{member.role === "owner" ? "Propietario" : "Miembro"}</small></div></div>; })}</div></section><section className="panel"><div className="panel-header"><div><h2>Invita a alguien</h2><p className="muted" style={{ marginBottom: 0 }}>Comparte este código.</p></div></div><div className="invite-code"><span>{household.invite_code}</span><button className="button button-secondary" onClick={copyInvite}>{copied ? "Copiado" : "Copiar"}</button></div></section></div>
-    </main><nav className="bottom-nav"><span>Inicio</span><span>Tareas</span><span>Compra</span><span>Más</span></nav></>
+    </main></>
   </>;
 }
