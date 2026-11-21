@@ -2,6 +2,7 @@
 @import "./expenses/expenses.css";
 @import "./calendar/calendar.css";
 @import "./meals/meals.css";
+.shopping-expense-link{display:flex;align-items:center;gap:10px;margin-bottom:16px}.disabled-link{opacity:.55;pointer-events:none}
 .desktop-nav-link{display:inline-flex;align-items:center;gap:5px}
 
 :root {

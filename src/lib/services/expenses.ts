@@ -109,6 +109,14 @@ export async function deleteExpense(expenseId: string) {
   return createClient().from("expenses").delete().eq("id", expenseId);
 }
 
+export async function getExpenseForShoppingList(shoppingListId: string) {
+  return createClient()
+    .from("expenses")
+    .select("id")
+    .eq("shopping_list_id", shoppingListId)
+    .maybeSingle();
+}
+
 export async function createExpenseCategory(householdId: string, name: string, color: string) {
   return createClient()
     .from("expense_categories")

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AddFab, AppNav } from "@/components/app-nav";
 import { Avatar, Badge, Button, Card, Drawer, EmptyState, Skeleton, Toast } from "@/components/ui/primitives";
 import { getHouseholds } from "@/lib/services/households";
+import { archiveShoppingList } from "@/lib/services/shopping";
 import { createClient } from "@/lib/supabase/browser";
 import {
   amountToCents,
@@ -238,8 +239,13 @@ export function ExpensesBoard() {
     const result = editingId ? await updateExpense(editingId, input) : await createExpense(input);
     if (result.error) setError(result.error.message);
     else {
+      let archiveError: { message: string } | null = null;
+      if (form.shoppingListId) {
+        const archiveResult = await archiveShoppingList(form.shoppingListId, true);
+        archiveError = archiveResult.error ? { message: archiveResult.error.message } : null;
+      }
       setEditorOpen(false);
-      setToast({ message: editingId ? "Gasto actualizado." : "Gasto añadido.", tone: "success" });
+      setToast({ message: archiveError ? `Gasto guardado, pero no se pudo archivar la lista: ${archiveError.message}` : editingId ? "Gasto actualizado." : "Gasto añadido.", tone: archiveError ? "error" : "success" });
       await refreshExpenses(household.id);
     }
     setSaving(false);
