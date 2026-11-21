@@ -17,6 +17,7 @@ import {
   listExpenseCategories,
   listExpenseShoppingLists,
   listExpenses,
+  translateExpenseError,
   updateExpense,
   type Expense,
   type ExpenseCategory,
@@ -119,14 +120,14 @@ export function ExpensesBoard() {
 
   async function refreshExpenses(householdId: string, targetMonth: Date = month) {
     const { data, error: expenseError } = await listExpenses(householdId, monthStart(targetMonth), nextMonthStart(targetMonth));
-    if (expenseError) setError(expenseError.message);
+    if (expenseError) setError(translateExpenseError(expenseError.message));
     else setExpenses((data ?? []) as Expense[]);
   }
 
   async function loadData() {
     const supabase = createClient();
     const [{ data: households, error: householdError }, { data: userData }] = await Promise.all([getHouseholds(), supabase.auth.getUser()]);
-    if (householdError) { setError(householdError.message); setLoading(false); return; }
+    if (householdError) { setError("No se han podido cargar los gastos del hogar."); setLoading(false); return; }
     const active = (households as Household[] | null)?.[0] ?? null;
     if (!active) { router.replace("/onboarding"); return; }
 
@@ -137,9 +138,9 @@ export function ExpensesBoard() {
       listExpenseCategories(active.id),
       listExpenseShoppingLists(active.id),
     ]);
-    if (memberError) setError(memberError.message);
-    if (categoryError) setError(categoryError.message);
-    if (listError) setError(listError.message);
+    if (memberError) setError("No se han podido cargar los miembros del hogar.");
+    if (categoryError) setError("No se han podido cargar las categorías de gasto.");
+    if (listError) setError("No se han podido cargar las listas de compra.");
     const nextCategories = (categoryRows ?? []) as ExpenseCategory[];
     setMembers((memberRows ?? []) as ExpenseMember[]);
     setCategories(nextCategories);
@@ -229,7 +230,7 @@ export function ExpensesBoard() {
     if (newCategoryOpen) {
       if (!newCategoryName.trim()) { setError("Indica el nombre de la nueva categoría."); setSaving(false); return; }
       const { data: category, error: categoryError } = await createExpenseCategory(household.id, newCategoryName, newCategoryColor);
-      if (categoryError) { setError(categoryError.message); setSaving(false); return; }
+      if (categoryError) { setError(translateExpenseError(categoryError.message)); setSaving(false); return; }
       if (category) {
         categoryId = category.id;
         setCategories((current) => [...current, category as ExpenseCategory].sort((a, b) => a.name.localeCompare(b.name, "es")));
@@ -237,7 +238,7 @@ export function ExpensesBoard() {
     }
     const input = { householdId: household.id, categoryId, amount: centsToAmount(amountCents), description: form.description, spentOn: form.spentOn, paidBy: form.paidBy || currentUserId, shoppingListId: form.shoppingListId || null };
     const result = editingId ? await updateExpense(editingId, input) : await createExpense(input);
-    if (result.error) setError(result.error.message);
+    if (result.error) setError(translateExpenseError(result.error.message));
     else {
       let archiveError: { message: string } | null = null;
       if (form.shoppingListId) {

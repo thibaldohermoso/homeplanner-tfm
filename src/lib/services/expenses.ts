@@ -114,7 +114,15 @@ export async function getExpenseForShoppingList(shoppingListId: string) {
     .from("expenses")
     .select("id")
     .eq("shopping_list_id", shoppingListId)
+    .limit(1)
     .maybeSingle();
+}
+
+export function translateExpenseError(message: string) {
+  const normalized = message.toLowerCase();
+  if (normalized.includes("duplicate") || normalized.includes("unique") || normalized.includes("shopping_list_id")) return "Esta lista de compras ya tiene un gasto registrado.";
+  if (normalized.includes("permission") || normalized.includes("policy") || normalized.includes("rls")) return "No tienes permiso para modificar este gasto.";
+  return "No se ha podido guardar el gasto. Inténtalo de nuevo.";
 }
 
 export async function createExpenseCategory(householdId: string, name: string, color: string) {

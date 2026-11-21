@@ -44,7 +44,7 @@ export function Dashboard() {
       const [{ data: memberRows }, tasks, shopping, expenses, events, meals] = await Promise.all([
         supabase.from("household_members").select("user_id, role, profiles(display_name)").eq("household_id", active.id),
         supabase.from("tasks").select("id").eq("household_id", active.id).neq("status", "done"),
-        supabase.from("shopping_items").select("id").eq("household_id", active.id).eq("is_checked", false),
+        supabase.from("shopping_items").select("id, shopping_lists!inner(is_archived)").eq("household_id", active.id).eq("is_checked", false).eq("shopping_lists.is_archived", false),
         listExpenses(active.id, monthStart, nextMonthStart),
         supabase.from("events").select("id").eq("household_id", active.id).gte("starts_at", now.toISOString()).lt("starts_at", new Date(now.getTime() + 7 * 86400000).toISOString()),
         listMealPlans(active.id, localDateKey(now), localDateKey(tomorrow)),
