@@ -99,7 +99,7 @@ Propuesta de Claude (pendiente de confirmar por el usuario):
 
 **Hitos de desarrollo del SRS:** la primera meta es una aplicación Next.js desplegada, con inicio de sesión y dos usuarios compartiendo un hogar. Las relaciones críticas a resolver en el diseño son usuarios–hogares, compras–finanzas y tareas–calendario.
 
-## 8. Entregable producido: migración SQL `0001_init_homeplanner.sql`
+## 8. Entregable producido: migración SQL `20261026000001_init_homeplanner.sql`
 
 Esquema completo de P0 para Supabase con Row Level Security. El código completo está en el **Apéndice A**.
 
@@ -161,7 +161,7 @@ Esquema completo de P0 para Supabase con Row Level Security. El código completo
 
 ---
 
-## Apéndice A — `0001_init_homeplanner.sql`
+## Apéndice A — `20261026000001_init_homeplanner.sql`
 
 ```sql
 -- =====================================================================

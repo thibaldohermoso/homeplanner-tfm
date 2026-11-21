@@ -1,5 +1,5 @@
 -- HomePlanner — Migración 0002: perfiles para usuarios existentes
--- Ejecutar después de 0001_init_homeplanner.sql.
+-- Ejecutar después de 20261026000001_init_homeplanner.sql.
 
 create or replace function public.ensure_my_profile()
 returns void
