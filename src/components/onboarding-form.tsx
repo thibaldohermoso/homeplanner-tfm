@@ -16,9 +16,7 @@ export function OnboardingForm() {
     const { error: rpcError } = await createHousehold(name);
     if (rpcError) {
       console.error("create_household failed", { message: rpcError.message, code: rpcError.code, details: rpcError.details, hint: rpcError.hint });
-      setError(rpcError.message.includes("profiles")
-        ? "Tu usuario no tiene perfil en la base de datos. Ejecuta la migración 0002 y vuelve a intentarlo."
-        : `No se ha podido crear el hogar. ${process.env.NODE_ENV === "development" ? rpcError.message : "Comprueba el nombre e inténtalo de nuevo."}`);
+      setError("No se ha podido crear el hogar. Comprueba el nombre e inténtalo de nuevo.");
     }
     else router.push("/dashboard");
     setLoading(null);
