@@ -48,6 +48,12 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
+La vista `/profile` permite actualizar el nombre visible y teléfono, solicitar
+un cambio de email, cambiar la contraseña, gestionar el hogar, cerrar sesión y
+solicitar la eliminación de la cuenta. Para habilitar esta última operación en
+el servidor, configura `SUPABASE_SERVICE_ROLE_KEY` únicamente en `.env.local`
+o en Vercel; nunca la expongas con `NEXT_PUBLIC_` ni la incluyas en el cliente.
+
 Las variables `SUPABASE_TEST_EMAIL_A`, `SUPABASE_TEST_PASSWORD_A`, `SUPABASE_TEST_EMAIL_B` y `SUPABASE_TEST_PASSWORD_B` son opcionales y solo sirven como referencia para pruebas locales; no crean usuarios automáticamente.
 
 ## Módulos implementados
