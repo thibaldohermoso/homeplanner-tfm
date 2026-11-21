@@ -1,2 +1,5 @@
-import { ModulePlaceholder } from "@/components/module-placeholder";
-export default function ExpensesPage() { return <ModulePlaceholder module="expenses" />; }
+import { ExpensesBoard } from "@/components/expenses-board";
+
+export default function ExpensesPage() {
+  return <ExpensesBoard />;
+}
