@@ -1,2 +1,5 @@
-import { ModulePlaceholder } from "@/components/module-placeholder";
-export default function MealsPage() { return <ModulePlaceholder module="meals" />; }
+import { MealsBoard } from "@/components/meals-board";
+
+export default function MealsPage() {
+  return <MealsBoard />;
+}
