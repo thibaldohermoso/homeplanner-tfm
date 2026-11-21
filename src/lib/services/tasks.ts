@@ -49,7 +49,25 @@ export async function updateTaskStatus(taskId: string, status: TaskStatus) {
   return supabase.from("tasks").update({ status }).eq("id", taskId).select().single();
 }
 
+export async function updateTask(taskId: string, input: TaskInput) {
+  const supabase = createClient();
+  return supabase.from("tasks").update({
+    title: input.title.trim(),
+    description: input.description?.trim() || null,
+    priority: input.priority,
+    due_date: input.dueDate || null,
+    assigned_to: input.assignedTo || null,
+  }).eq("id", taskId).select().single();
+}
+
 export async function deleteTask(taskId: string) {
   const supabase = createClient();
   return supabase.from("tasks").delete().eq("id", taskId);
+}
+
+export function translateTaskError(message: string) {
+  const normalized = message.toLowerCase();
+  if (normalized.includes("violates") && normalized.includes("check")) return "Revisa los datos de la tarea.";
+  if (normalized.includes("permission") || normalized.includes("policy") || normalized.includes("rls")) return "No tienes permiso para modificar esta tarea.";
+  return "No se ha podido guardar la tarea. Inténtalo de nuevo.";
 }

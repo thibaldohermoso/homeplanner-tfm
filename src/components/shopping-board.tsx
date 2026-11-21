@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Receipt } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/browser";
 import { AddFab, AppNav } from "@/components/app-nav";
 import { getHouseholds } from "@/lib/services/households";
 import { amountToCents, centsToAmount, getExpenseForShoppingList } from "@/lib/services/expenses";
@@ -16,6 +17,7 @@ import {
   listShoppingLists,
   renameShoppingList,
   toggleShoppingItem,
+  translateShoppingError,
   type ShoppingItem,
   type ShoppingList,
 } from "@/lib/services/shopping";
@@ -64,13 +66,13 @@ export function ShoppingBoard() {
 
   async function loadLists(preferredListId?: string | null) {
     const [{ data: households, error: householdError }] = await Promise.all([getHouseholds()]);
-    if (householdError) { setError(householdError.message); setLoading(false); return; }
+    if (householdError) { setError("No se han podido cargar las listas del hogar."); setLoading(false); return; }
     const active = (households as Household[] | null)?.[0] ?? null;
     if (!active) { router.replace("/onboarding"); return; }
     setHousehold(active);
 
     const { data: rows, error: listError } = await listShoppingLists(active.id, includeArchived);
-    if (listError) { setError(listError.message); setLoading(false); return; }
+    if (listError) { setError(translateShoppingError(listError.message)); setLoading(false); return; }
     const nextLists = (rows ?? []) as ShoppingList[];
     setLists(nextLists);
     setSelectedListId((current) => {
@@ -83,21 +85,30 @@ export function ShoppingBoard() {
   async function loadItems(listId: string | null) {
     if (!listId) { setItems([]); return; }
     const [{ data: rows, error: itemError }, { data: linkedExpense, error: linkedExpenseError }] = await Promise.all([listShoppingItems(listId), getExpenseForShoppingList(listId)]);
-    if (itemError) setError(itemError.message);
-    if (linkedExpenseError) setError(linkedExpenseError.message);
+    if (itemError) setError(translateShoppingError(itemError.message));
+    if (linkedExpenseError) setError("No se ha podido comprobar si la lista ya tiene un gasto.");
     setLinkedExpenseId(linkedExpense?.id ?? null);
     setItems((rows ?? []) as ShoppingItem[]);
   }
 
   useEffect(() => { void loadLists(); }, [includeArchived, router]);
   useEffect(() => { void loadItems(selectedListId); }, [selectedListId]);
+  useEffect(() => {
+    if (!household?.id) return;
+    const supabase = createClient();
+    const channel = supabase.channel(`shopping-${household.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "shopping_lists", filter: `household_id=eq.${household.id}` }, () => void loadLists(selectedListId))
+      .on("postgres_changes", { event: "*", schema: "public", table: "shopping_items", filter: `household_id=eq.${household.id}` }, () => void loadItems(selectedListId))
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [household?.id, selectedListId, includeArchived]);
 
   async function handleCreateList(event: FormEvent) {
     event.preventDefault();
     if (!household || !listName.trim()) return;
     setSaving(true); setError(null);
     const { data, error: createError } = await createShoppingList(household.id, listName);
-    if (createError) setError(createError.message);
+    if (createError) setError(translateShoppingError(createError.message));
     else { setListName(""); await loadLists(data?.id); }
     setSaving(false);
   }
@@ -113,7 +124,7 @@ export function ShoppingBoard() {
     }
     setSaving(true); setError(null);
     const { error: createError } = await createShoppingItem({ householdId: household.id, listId: selectedList.id, name: itemName, quantity: parsedQuantity, unit, estimatedPrice: parsedPrice });
-    if (createError) setError(createError.message);
+    if (createError) setError(translateShoppingError(createError.message));
     else { setItemName(""); setQuantity("1"); setUnit(""); setEstimatedPrice(""); await loadItems(selectedList.id); }
     setSaving(false);
   }
@@ -123,7 +134,7 @@ export function ShoppingBoard() {
     if (!selectedList || !editingName.trim()) return;
     setSaving(true); setError(null);
     const { error: renameError } = await renameShoppingList(selectedList.id, editingName);
-    if (renameError) setError(renameError.message);
+    if (renameError) setError(translateShoppingError(renameError.message));
     else { setEditingName(""); await loadLists(selectedList.id); }
     setSaving(false);
   }
@@ -134,7 +145,7 @@ export function ShoppingBoard() {
     if (!window.confirm(`¿Quieres ${action} la lista «${selectedList.name}»?`)) return;
     setSaving(true); setError(null);
     const { error: archiveError } = await archiveShoppingList(selectedList.id, !selectedList.is_archived);
-    if (archiveError) setError(archiveError.message);
+    if (archiveError) setError(translateShoppingError(archiveError.message));
     else await loadLists(null);
     setSaving(false);
   }
@@ -142,13 +153,13 @@ export function ShoppingBoard() {
   async function handleToggle(item: ShoppingItem) {
     setError(null);
     const { error: updateError } = await toggleShoppingItem(item.id, !item.is_checked);
-    if (updateError) setError(updateError.message); else await loadItems(selectedListId);
+    if (updateError) setError(translateShoppingError(updateError.message)); else await loadItems(selectedListId);
   }
 
   async function handleDelete(item: ShoppingItem) {
     if (!window.confirm(`¿Eliminar «${item.name}» de la lista?`)) return;
     const { error: deleteError } = await deleteShoppingItem(item.id);
-    if (deleteError) setError(deleteError.message); else setItems((current) => current.filter((row) => row.id !== item.id));
+    if (deleteError) setError(translateShoppingError(deleteError.message)); else setItems((current) => current.filter((row) => row.id !== item.id));
   }
 
   if (loading) return <main className="loading">Cargando compras…</main>;

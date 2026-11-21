@@ -100,6 +100,13 @@ export async function toggleShoppingItem(itemId: string, checked: boolean) {
     .single();
 }
 
+export function translateShoppingError(message: string) {
+  const normalized = message.toLowerCase();
+  if (normalized.includes("permission") || normalized.includes("policy") || normalized.includes("rls")) return "No tienes permiso para modificar esta lista.";
+  if (normalized.includes("check") || normalized.includes("quantity") || normalized.includes("estimated_price")) return "Revisa la cantidad y el precio del artículo.";
+  return "No se ha podido actualizar la lista. Inténtalo de nuevo.";
+}
+
 export async function deleteShoppingItem(itemId: string) {
   return createClient().from("shopping_items").delete().eq("id", itemId);
 }
