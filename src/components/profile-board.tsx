@@ -2,17 +2,19 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Copy, Home, KeyRound, Mail, Save, ShieldAlert, UserRound, Users } from "lucide-react";
+import { Copy, Crown, Home, KeyRound, Mail, RefreshCw, Save, ShieldAlert, UserRound, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AppNav } from "@/components/app-nav";
-import { Avatar, Button, Card, EmptyState, Skeleton, Toast } from "@/components/ui/primitives";
+import { Avatar, Button, Card, ConfirmDialog, EmptyState, Skeleton, Toast } from "@/components/ui/primitives";
 import { signOut } from "@/lib/services/auth";
 import {
   getHouseholdsForProfile,
   getProfile,
   leaveHousehold,
   listProfileHouseholdMembers,
+  regenerateHouseholdInviteCode,
   translateAccountError,
+  transferHouseholdOwnership,
   updateHouseholdName,
   updateProfile,
   type Household,
@@ -69,6 +71,8 @@ export function ProfileBoard({ canDeleteAccount }: { canDeleteAccount: boolean }
   const [leaving, setLeaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [memberToTransfer, setMemberToTransfer] = useState<HouseholdMember | null>(null);
+  const [regeneratingCode, setRegeneratingCode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
 
@@ -166,7 +170,8 @@ export function ProfileBoard({ canDeleteAccount }: { canDeleteAccount: boolean }
       return;
     }
     setSavingEmail(true);
-    const { data, error: emailError } = await createClient().auth.updateUser({ email: cleanEmail });
+    const redirectTo = `${window.location.origin}/auth/callback?next=/profile`;
+    const { data, error: emailError } = await createClient().auth.updateUser({ email: cleanEmail }, { emailRedirectTo: redirectTo });
     if (emailError) notify(translateAccountError(emailError.message), "error");
     else {
       setPendingEmail((data.user as typeof data.user & { new_email?: string } | null)?.new_email ?? cleanEmail);
@@ -237,6 +242,25 @@ export function ProfileBoard({ canDeleteAccount }: { canDeleteAccount: boolean }
     window.setTimeout(() => setCopied(false), 1800);
   }
 
+  async function handleTransferOwnership() {
+    if (!household || !memberToTransfer) return;
+    setSavingHousehold(true);
+    const { error: transferError } = await transferHouseholdOwnership(household.id, memberToTransfer.user_id);
+    if (transferError) notify("No se ha podido transferir la propiedad. Comprueba que la persona siga siendo miembro.", "error");
+    else { notify("La propiedad del hogar se ha transferido.", "success"); setMemberToTransfer(null); await loadData(); }
+    setSavingHousehold(false);
+  }
+
+  async function handleRegenerateInvite() {
+    if (!household || !isOwner) return;
+    if (!window.confirm("El código anterior dejará de funcionar. ¿Regenerar el código de invitación?")) return;
+    setRegeneratingCode(true);
+    const { data, error: regenerateError } = await regenerateHouseholdInviteCode(household.id);
+    if (regenerateError) notify("No se ha podido regenerar el código de invitación.", "error");
+    else { setHousehold((current) => current ? { ...current, invite_code: String(data) } : current); notify("Código de invitación regenerado.", "success"); }
+    setRegeneratingCode(false);
+  }
+
   async function handleLeaveHousehold() {
     if (!household || !currentMember || !canLeaveHousehold) return;
     const message = members.length === 1
@@ -272,7 +296,9 @@ export function ProfileBoard({ canDeleteAccount }: { canDeleteAccount: boolean }
       setDeleting(false);
       return;
     }
-    window.location.href = "/login";
+    await signOut("local");
+    router.replace("/login");
+    router.refresh();
   }
 
   if (loading) {
@@ -333,8 +359,8 @@ export function ProfileBoard({ canDeleteAccount }: { canDeleteAccount: boolean }
                 <div className="field"><label htmlFor="household-name">Nombre del hogar</label><input id="household-name" value={householdName} maxLength={80} disabled={!isOwner} onChange={(event) => setHouseholdName(event.target.value)} />{!isOwner && <small className="field-help">Solo el propietario puede cambiar el nombre.</small>}</div>
                 {isOwner && <div className="profile-actions"><Button type="submit" variant="secondary" loading={savingHousehold} disabled={householdName.trim() === household.name}><Save size={16} /> Guardar hogar</Button></div>}
               </form>
-              <div className="invite-panel"><div><span className="field-help">Código de invitación</span><strong>{household.invite_code}</strong></div><button className="button button-secondary" type="button" onClick={() => void handleCopyInvite}><Copy size={16} /> {copied ? "Copiado" : "Copiar"}</button></div>
-              <div className="member-section"><h3>Miembros ({members.length})</h3>{members.length === 0 ? <EmptyState title="No hay miembros" description="Este hogar todavía no tiene miembros." /> : <div className="profile-member-list">{members.map((member) => <div className="profile-member" key={member.user_id}><Avatar name={memberName(member)} size="sm" /><div><strong>{memberName(member)}</strong><small>{member.role === "owner" ? "Propietario" : "Miembro"} · desde {formatJoinedDate(member.joined_at)}</small></div></div>)}</div>}</div>
+              <div className="invite-panel"><div><span className="field-help">Código de invitación</span><strong>{household.invite_code}</strong></div><div className="invite-actions"><button className="button button-secondary" type="button" onClick={() => void handleCopyInvite}><Copy size={16} /> {copied ? "Copiado" : "Copiar"}</button>{isOwner && <button className="button button-quiet" type="button" onClick={() => void handleRegenerateInvite()} disabled={regeneratingCode}><RefreshCw size={16} /> {regeneratingCode ? "Regenerando…" : "Regenerar"}</button>}</div></div>
+              <div className="member-section"><h3>Miembros ({members.length})</h3>{members.length === 0 ? <EmptyState title="No hay miembros" description="Este hogar todavía no tiene miembros." /> : <div className="profile-member-list">{members.map((member) => <div className="profile-member" key={member.user_id}><Avatar name={memberName(member)} size="sm" /><div><strong>{memberName(member)}</strong><small>{member.role === "owner" ? "Propietario" : "Miembro"} · desde {formatJoinedDate(member.joined_at)}</small></div>{isOwner && member.user_id !== userId && <button className="button button-quiet profile-member-owner" type="button" onClick={() => setMemberToTransfer(member)}><Crown size={15} /> Hacer propietario</button>}</div>)}</div>}</div>
               <div className="danger-row"><div><strong>Salir del hogar</strong><p>{isOwner && members.length > 1 && ownerCount === 1 ? "No puedes salir porque eres el único propietario. Transfiere la propiedad antes." : members.length === 1 ? "Se eliminarán el hogar y sus datos porque eres la única persona." : "Perderás el acceso a los datos compartidos."}</p></div><Button type="button" variant="danger" loading={leaving} disabled={!canLeaveHousehold} onClick={() => void handleLeaveHousehold()}>Salir del hogar</Button></div>
             </> : <EmptyState icon={<Home size={28} />} title="Todavía no tienes hogar" description="Crea o únete a un hogar para compartir tareas, compras y gastos." action={<Link className="button button-primary" href="/onboarding">Configurar hogar</Link>} />}
           </Card>
@@ -352,5 +378,6 @@ export function ProfileBoard({ canDeleteAccount }: { canDeleteAccount: boolean }
       </div>
     </main>
     {toast && <Toast message={toast.message} tone={toast.tone === "error" ? "error" : toast.tone} onClose={() => setToast(null)} />}
+    <ConfirmDialog open={Boolean(memberToTransfer)} title="Transferir propiedad" message={memberToTransfer ? `¿Hacer propietario a ${memberName(memberToTransfer)}? Dejarás de ser el propietario actual.` : ""} confirmLabel="Transferir propiedad" onClose={() => setMemberToTransfer(null)} onConfirm={() => void handleTransferOwnership()} loading={savingHousehold} />
   </>;
 }

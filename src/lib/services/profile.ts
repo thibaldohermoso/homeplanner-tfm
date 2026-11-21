@@ -67,6 +67,14 @@ export async function updateHouseholdName(householdId: string, name: string) {
     .single();
 }
 
+export async function transferHouseholdOwnership(householdId: string, newOwnerId: string) {
+  return createClient().rpc("transfer_household_ownership", { p_household: householdId, p_new_owner: newOwnerId });
+}
+
+export async function regenerateHouseholdInviteCode(householdId: string) {
+  return createClient().rpc("regenerate_household_invite_code", { p_household: householdId });
+}
+
 export async function leaveHousehold(householdId: string, userId: string) {
   const supabase = createClient();
   const [{ data: membership, error: membershipError }, { count, error: countError }] = await Promise.all([
