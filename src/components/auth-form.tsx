@@ -23,18 +23,23 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     setLoading(true);
     const supabase = createClient();
 
+    const callbackUrl = `${window.location.origin}/auth/callback?next=${isLogin ? "/dashboard" : "/dashboard"}`;
     const result = isLogin
       ? await supabase.auth.signInWithPassword({ email, password })
-      : await supabase.auth.signUp({ email, password, options: { data: { full_name: displayName.trim() } } });
+      : await supabase.auth.signUp({ email, password, options: { data: { full_name: displayName.trim() }, emailRedirectTo: callbackUrl } });
 
     if (result.error) {
-      setError("No se ha podido completar la operación. Comprueba tus datos e inténtalo de nuevo.");
+      setError(isLogin && (result.error.message.toLowerCase().includes("email not confirmed") || result.error.code === "email_not_confirmed")
+        ? "Tu email todavía no está confirmado. Revisa tu bandeja de entrada y confirma la cuenta antes de iniciar sesión."
+        : "No se ha podido completar la operación. Comprueba tus datos e inténtalo de nuevo.");
       setLoading(false);
       return;
     }
 
     if (isLogin) {
-      window.location.href = "/dashboard";
+      const next = new URLSearchParams(window.location.search).get("next");
+      const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+      window.location.href = safeNext;
     } else if (!result.data.session) {
       setSuccess("Cuenta creada. Revisa tu correo para confirmar la dirección antes de iniciar sesión.");
       setLoading(false);
@@ -61,7 +66,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         </form>
 
         <div className="auth-footer">
-          {isLogin ? <>¿Todavía no tienes cuenta? <Link className="link" href="/register">Crear una cuenta</Link></> : <>¿Ya tienes cuenta? <Link className="link" href="/login">Iniciar sesión</Link></>}
+          {isLogin ? <><Link className="link" href="/forgot-password">¿Has olvidado tu contraseña?</Link><br /><span>¿Todavía no tienes cuenta? <Link className="link" href="/register">Crear una cuenta</Link></span></> : <>¿Ya tienes cuenta? <Link className="link" href="/login">Iniciar sesión</Link></>}
         </div>
       </section>
     </main></>
