@@ -1,5 +1,6 @@
 @import "./shopping/shopping.css";
 @import "./expenses/expenses.css";
+@import "./calendar/calendar.css";
 .desktop-nav-link{display:inline-flex;align-items:center;gap:5px}
 
 :root {

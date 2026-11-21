@@ -1,2 +1,5 @@
-import { ModulePlaceholder } from "@/components/module-placeholder";
-export default function CalendarPage() { return <ModulePlaceholder module="calendar" />; }
+import { CalendarBoard } from "@/components/calendar-board";
+
+export default function CalendarPage() {
+  return <CalendarBoard />;
+}
