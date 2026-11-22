@@ -9,6 +9,7 @@ import { Button, Drawer, EmptyState, Skeleton, Toast } from "@/components/ui/pri
 import { getHouseholds } from "@/lib/services/households";
 import { createClient } from "@/lib/supabase/browser";
 import { createCalendarEvent, deleteCalendarEvent, listCalendarEvents, listDatedTasks, updateCalendarEvent, type CalendarEvent, type DatedTask } from "@/lib/services/calendar";
+import { dateKey, monthCells } from "@/lib/utils/calendar";
 
 type Household = { id: string; name: string };
 type ToastState = { message: string; tone: "success" | "error" | "info" } | null;
@@ -19,10 +20,6 @@ const monthFormatter = new Intl.DateTimeFormat("es-ES", { month: "long", year: "
 const dateFormatter = new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long", timeZone: madridZone });
 const timeFormatter = new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit", timeZone: madridZone });
 const weekDays = ["L", "M", "X", "J", "V", "S", "D"];
-
-function dateKey(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
 
 function todayKey() {
   return dateKey(new Date());
@@ -50,17 +47,6 @@ function isoForDateTimeLocal(value: string) {
 
 function emptyForm(selectedDate: string): EventForm {
   return { title: "", description: "", startsAt: `${selectedDate}T09:00`, endsAt: `${selectedDate}T10:00`, allDay: false, taskId: "" };
-}
-
-function monthCells(month: Date) {
-  const first = new Date(month.getFullYear(), month.getMonth(), 1);
-  const last = new Date(month.getFullYear(), month.getMonth() + 1, 0);
-  const mondayOffset = (first.getDay() + 6) % 7;
-  const totalCells = Math.ceil((mondayOffset + last.getDate()) / 7) * 7;
-  return Array.from({ length: totalCells }, (_, index) => {
-    const day = index - mondayOffset + 1;
-    return day < 1 || day > last.getDate() ? null : new Date(month.getFullYear(), month.getMonth(), day);
-  });
 }
 
 export function CalendarBoard() {

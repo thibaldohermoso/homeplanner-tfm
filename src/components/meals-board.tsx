@@ -8,6 +8,7 @@ import { Button, Drawer, Skeleton, Toast } from "@/components/ui/primitives";
 import { getHouseholds } from "@/lib/services/households";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteMealPlan, listMealPlans, upsertMealPlan, type MealPlan, type MealType } from "@/lib/services/meals";
+import { dateKey, mondayOf, weekDates } from "@/lib/utils/calendar";
 
 type Household = { id: string; name: string };
 type ToastState = { message: string; tone: "success" | "error" | "info" } | null;
@@ -22,21 +23,7 @@ const mealTypes: { type: MealType; label: string; icon: typeof Coffee }[] = [
 const dayFormatter = new Intl.DateTimeFormat("es-ES", { weekday: "short", day: "numeric", month: "short" });
 const weekFormatter = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "long", year: "numeric" });
 
-function dateKey(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
-
 function todayKey() { return dateKey(new Date()); }
-
-function mondayOf(date: Date) {
-  const result = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  result.setDate(result.getDate() - ((result.getDay() + 6) % 7));
-  return result;
-}
-
-function weekDates(week: Date) {
-  return Array.from({ length: 7 }, (_, index) => { const date = new Date(week); date.setDate(week.getDate() + index); return date; });
-}
 
 function emptyForm(date: string, mealType: MealType = "breakfast"): MealForm {
   return { title: "", notes: "", planDate: date, mealType };

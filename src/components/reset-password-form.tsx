@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppNav } from "@/components/app-nav";
 import { createClient } from "@/lib/supabase/browser";
+import { isValidPassword } from "@/lib/utils/account-validation";
 
 export function ResetPasswordForm({ recoverySession }: { recoverySession: boolean }) {
   const router = useRouter();
@@ -27,7 +28,7 @@ export function ResetPasswordForm({ recoverySession }: { recoverySession: boolea
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    if (password.length < 8) { setError("La nueva contraseña debe tener al menos 8 caracteres."); return; }
+    if (!isValidPassword(password)) { setError("La nueva contraseña debe tener al menos 8 caracteres."); return; }
     if (password !== repeatPassword) { setError("Las contraseñas no coinciden."); return; }
     setLoading(true);
     const { error: updateError } = await createClient().auth.updateUser({ password });

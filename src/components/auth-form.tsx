@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { AppNav } from "@/components/app-nav";
+import { safeNext } from "@/lib/utils/navigation";
 
 type AuthMode = "login" | "register";
 
@@ -38,8 +39,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
 
     if (isLogin) {
       const next = new URLSearchParams(window.location.search).get("next");
-      const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
-      window.location.href = safeNext;
+      window.location.href = safeNext(next);
     } else if (!result.data.session) {
       setSuccess("Cuenta creada. Revisa tu correo para confirmar la dirección antes de iniciar sesión.");
       setLoading(false);

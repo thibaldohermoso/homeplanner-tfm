@@ -22,6 +22,7 @@ import {
   type Profile,
 } from "@/lib/services/profile";
 import { createClient } from "@/lib/supabase/browser";
+import { isValidPassword, isValidPhone } from "@/lib/utils/account-validation";
 
 type ToastState = { message: string; tone: "info" | "success" | "error" };
 
@@ -139,7 +140,7 @@ export function ProfileBoard({ canDeleteAccount }: { canDeleteAccount: boolean }
       notify("El nombre visible debe tener entre 1 y 60 caracteres.", "error");
       return;
     }
-    if (cleanPhone && (!/^[\d+\s().-]+$/.test(cleanPhone) || cleanPhone.length < 6 || cleanPhone.length > 20)) {
+    if (!isValidPhone(cleanPhone)) {
       notify("El teléfono debe tener entre 6 y 20 caracteres y solo puede contener dígitos, espacios, +, paréntesis y guiones.", "error");
       return;
     }
@@ -183,7 +184,7 @@ export function ProfileBoard({ canDeleteAccount }: { canDeleteAccount: boolean }
 
   async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (newPassword.length < 8) {
+    if (!isValidPassword(newPassword)) {
       notify("La nueva contraseña debe tener al menos 8 caracteres.", "error");
       return;
     }
