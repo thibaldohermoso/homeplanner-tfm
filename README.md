@@ -73,3 +73,17 @@ pnpm lint
 pnpm build
 ```
 
+## Pruebas
+
+```powershell
+pnpm test
+pnpm test:watch
+pnpm supabase test db
+pnpm test:e2e
+```
+
+`pnpm test` ejecuta Vitest sin Docker. Las pruebas pgTAP requieren Supabase
+local y `pnpm test:e2e` requiere dos usuarios de prueba configurados en
+`.env.local` que compartan un hogar. CI ejecuta únicamente lint, tests
+unitarios y build.
+
