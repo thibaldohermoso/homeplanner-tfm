@@ -1,12 +1,7 @@
 import { createClient } from "@/lib/supabase/browser";
+import type { Profile } from "@/lib/utils/profiles";
 export { isValidPassword, isValidPhone, translateAccountError } from "@/lib/utils/account-validation";
-
-export type Profile = {
-  id: string;
-  display_name: string;
-  avatar_url: string | null;
-  phone: string | null;
-};
+export type { Profile } from "@/lib/utils/profiles";
 
 export type Household = {
   id: string;
@@ -19,7 +14,7 @@ export type HouseholdMember = {
   user_id: string;
   role: "owner" | "member";
   joined_at: string;
-  profiles?: { id?: string; display_name: string; avatar_url?: string | null }[] | null;
+  profiles?: Profile | Profile[] | null;
 };
 
 export async function getProfile(userId: string) {

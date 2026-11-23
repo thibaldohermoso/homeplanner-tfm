@@ -23,11 +23,12 @@ import {
 } from "@/lib/services/profile";
 import { createClient } from "@/lib/supabase/browser";
 import { isValidPassword, isValidPhone } from "@/lib/utils/account-validation";
+import { getProfileName } from "@/lib/utils/profiles";
 
 type ToastState = { message: string; tone: "info" | "success" | "error" };
 
 function memberName(member: HouseholdMember) {
-  return member.profiles?.[0]?.display_name?.trim() || "Usuario";
+  return getProfileName(member.profiles);
 }
 
 function formatJoinedDate(value: string) {

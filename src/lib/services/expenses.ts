@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/browser";
+import type { Profile } from "@/lib/utils/profiles";
 
 export type ExpenseCategory = {
   id: string;
@@ -10,7 +11,7 @@ export type ExpenseCategory = {
 export type ExpenseMember = {
   user_id: string;
   role: "owner" | "member";
-  profiles?: { display_name: string }[] | null;
+  profiles?: Profile | Profile[] | null;
 };
 
 export type ExpenseShoppingList = {
@@ -30,7 +31,7 @@ export type Expense = {
   created_at: string;
   updated_at: string;
   expense_categories?: ExpenseCategory | ExpenseCategory[] | null;
-  profiles?: { id?: string; display_name: string } | { id?: string; display_name: string }[] | null;
+  profiles?: Profile | Profile[] | null;
   shopping_lists?: ExpenseShoppingList | ExpenseShoppingList[] | null;
 };
 
