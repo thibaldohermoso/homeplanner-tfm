@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { CalendarClock, CheckSquare, Pencil, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AddFab, AppNav } from "@/components/app-nav";
-import { Button, ConfirmDialog, Drawer, Toast } from "@/components/ui/primitives";
+import { Avatar, Badge, Button, ConfirmDialog, Drawer, EmptyState, PageHeader, PageSkeleton, Toast } from "@/components/ui/primitives";
 import { getHouseholds } from "@/lib/services/households";
 import { createClient } from "@/lib/supabase/browser";
 import { createTask, deleteTask, listHouseholdMembers, listTasks, translateTaskError, updateTask, updateTaskStatus, type TaskPriority, type TaskStatus } from "@/lib/services/tasks";
 import { getProfileName, type Profile } from "@/lib/utils/profiles";
+import { localDateKey } from "@/lib/utils/dates";
 
 type Household = { id: string; name: string };
 type Member = { user_id: string; profiles?: Profile | Profile[] | null };
@@ -18,6 +19,13 @@ type TaskForm = { title: string; description: string; priority: TaskPriority; du
 type ToastState = { message: string; tone: "success" | "error" | "info" } | null;
 
 const priorityLabels: Record<TaskPriority, string> = { low: "Baja", medium: "Media", high: "Alta" };
+const priorityTone = { low: "success", medium: "warning", high: "danger" } as const;
+const taskFilters = [
+  { value: "all", label: "Todas" },
+  { value: "pending", label: "Pendientes" },
+  { value: "in_progress", label: "En curso" },
+  { value: "done", label: "Completadas" },
+] as const;
 
 function formatDate(date: string | null) {
   if (!date) return "Sin fecha";
@@ -116,13 +124,54 @@ export function TaskBoard() {
     setConfirmTask(null);
   }
 
-  if (loading) return <main className="loading">Cargando tareas…</main>;
+  if (loading) return <><AppNav /><PageSkeleton label="Cargando tareas…" /></>;
+  const today = localDateKey(new Date());
 
-  return <><AppNav /><main className="shell page"><div className="page-header"><div><p className="eyebrow">{household?.name ?? "Tu hogar"}</p><h1>Tareas</h1><p className="muted">Organiza las responsabilidades del hogar y su seguimiento.</p></div><Link className="button button-secondary" href="/dashboard">Volver al inicio</Link></div>
+  return <><AppNav /><main className="shell page">
+    <PageHeader eyebrow={household?.name ?? "Tu hogar"} title="Tareas" description="Reparte las responsabilidades y consulta sus vencimientos." action={<Link className="button button-primary" href="#task-title"><Plus size={18} aria-hidden="true" /> Nueva tarea</Link>} />
     {error && <div className="form-error task-error" role="alert">{error}</div>}
     <div className="task-layout">
       <section className="panel"><div className="panel-header"><div><h2>Nueva tarea</h2><p className="muted" style={{ marginBottom: 0 }}>Añade una responsabilidad para el hogar.</p></div></div><form className="form" onSubmit={handleCreate}><div className="field"><label htmlFor="task-title">Título</label><input id="task-title" required maxLength={200} value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Ej. Limpiar la cocina" /></div><div className="field"><label htmlFor="task-description">Descripción</label><textarea id="task-description" maxLength={2000} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Detalles opcionales" rows={3} /></div><div className="form-row"><div className="field"><label htmlFor="task-priority">Prioridad</label><select id="task-priority" value={priority} onChange={(event) => setPriority(event.target.value as TaskPriority)}><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option></select></div><div className="field"><label htmlFor="task-date">Fecha límite</label><input id="task-date" type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} /></div></div><div className="field"><label htmlFor="task-assignee">Asignar a</label><select id="task-assignee" value={assignedTo} onChange={(event) => setAssignedTo(event.target.value)}><option value="">Sin asignar</option>{members.map((member) => <option key={member.user_id} value={member.user_id}>{getProfileName(member.profiles)}</option>)}</select></div><button className="button button-primary" disabled={saving}>{saving ? "Guardando…" : "Añadir tarea"}</button></form></section>
-      <section className="panel"><div className="panel-header"><div><h2>Mis tareas</h2><p className="muted" style={{ marginBottom: 0 }}>{tasks.length} tareas en este hogar.</p></div><select className="filter-select" aria-label="Filtrar tareas" value={filter} onChange={(event) => setFilter(event.target.value as "all" | TaskStatus)}><option value="all">Todas</option><option value="pending">Pendientes</option><option value="in_progress">En curso</option><option value="done">Completadas</option></select></div>{visibleTasks.length === 0 ? <div className="empty">No hay tareas en este filtro.</div> : <div className="task-list">{visibleTasks.map((task) => <article className={`task-item priority-${task.priority} status-${task.status}`} key={task.id}><div className="task-main"><div className="task-title-row"><h3>{task.title}</h3><span className={`priority-badge priority-${task.priority}`}>{priorityLabels[task.priority]}</span></div>{task.description && <p>{task.description}</p>}<div className="task-meta"><span>{formatDate(task.due_date)}</span>{getProfileName(task.profiles, "") && <span>Asignada a {getProfileName(task.profiles)}</span>}</div></div><div className="task-actions"><select aria-label={`Estado de ${task.title}`} value={task.status} onChange={(event) => void handleStatus(task.id, event.target.value as TaskStatus)}><option value="pending">Pendiente</option><option value="in_progress">En curso</option><option value="done">Completada</option></select><div className="task-action-buttons"><button className="button button-quiet" type="button" onClick={() => { setEditingId(task.id); setEditForm(taskForm(task)); setError(null); }} aria-label={`Editar ${task.title}`}><Pencil size={16} /> Editar</button><button className="button button-quiet delete-button" type="button" onClick={() => setConfirmTask(task)} aria-label={`Eliminar ${task.title}`}><Trash2 size={16} /> Eliminar</button></div></div></article>)}</div>}</section>
+      <section className="panel">
+        <div className="panel-header"><h2>Tareas del hogar</h2></div>
+        <div className="filter-row" role="group" aria-label="Filtrar tareas">
+          {taskFilters.map(({ value, label }) => (
+            <button className="filter-chip" type="button" key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>
+          ))}
+        </div>
+        {visibleTasks.length === 0 ? (
+          <EmptyState icon={<CheckSquare size={26} />} title={tasks.length ? "Sin tareas en este estado" : "Aún no hay tareas"} description={tasks.length ? "Prueba con otro filtro." : "Añade una responsabilidad para empezar."}
+            action={tasks.length ? <Button variant="secondary" onClick={() => setFilter("all")}>Ver todas</Button> : <Link className="button button-secondary" href="#task-title">Crear tarea</Link>} />
+        ) : (
+          <div className="task-list">
+            {visibleTasks.map((task) => {
+              const name = getProfileName(task.profiles);
+              const overdue = Boolean(task.due_date && task.due_date < today && task.status !== "done");
+              return (
+                <article className={`task-item priority-${task.priority} status-${task.status}`} key={task.id}>
+                  <div className="task-main">
+                    <div className="task-title-row"><h3>{task.title}</h3><Badge tone={priorityTone[task.priority]}>{priorityLabels[task.priority]}</Badge></div>
+                    {task.description && <p>{task.description}</p>}
+                    <div className="task-meta">
+                      <span className={overdue ? "overdue" : undefined}><CalendarClock size={15} aria-hidden="true" />{overdue ? "Vencida · " : ""}{formatDate(task.due_date)}</span>
+                      {task.assigned_to && <span><Avatar name={name} size="sm" />{name}</span>}
+                    </div>
+                  </div>
+                  <div className="task-actions">
+                    <select aria-label={`Estado de ${task.title}`} value={task.status} onChange={(event) => void handleStatus(task.id, event.target.value as TaskStatus)}>
+                      <option value="pending">Pendiente</option><option value="in_progress">En curso</option><option value="done">Completada</option>
+                    </select>
+                    <div className="task-action-buttons">
+                      <Button variant="ghost" className="icon-button" type="button" onClick={() => { setEditingId(task.id); setEditForm(taskForm(task)); setError(null); }} aria-label={`Editar ${task.title}`}><Pencil size={17} /></Button>
+                      <Button variant="ghost" className="icon-button danger-icon" type="button" onClick={() => setConfirmTask(task)} aria-label={`Eliminar ${task.title}`}><Trash2 size={17} /></Button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </div><AddFab href="#task-title" />
     <Drawer open={Boolean(editingId)} title="Editar tarea" onClose={() => { if (!saving) setEditingId(null); }}><form className="form task-edit-form" onSubmit={handleEdit}><div className="field"><label htmlFor="edit-task-title">Título</label><input id="edit-task-title" required maxLength={200} value={editForm.title} onChange={(event) => setEditForm((current) => ({ ...current, title: event.target.value }))} /></div><div className="field"><label htmlFor="edit-task-description">Descripción</label><textarea id="edit-task-description" maxLength={2000} rows={3} value={editForm.description} onChange={(event) => setEditForm((current) => ({ ...current, description: event.target.value }))} /></div><div className="form-row"><div className="field"><label htmlFor="edit-task-priority">Prioridad</label><select id="edit-task-priority" value={editForm.priority} onChange={(event) => setEditForm((current) => ({ ...current, priority: event.target.value as TaskPriority }))}><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option></select></div><div className="field"><label htmlFor="edit-task-date">Fecha límite</label><input id="edit-task-date" type="date" value={editForm.dueDate} onChange={(event) => setEditForm((current) => ({ ...current, dueDate: event.target.value }))} /></div></div><div className="field"><label htmlFor="edit-task-assignee">Asignar a</label><select id="edit-task-assignee" value={editForm.assignedTo} onChange={(event) => setEditForm((current) => ({ ...current, assignedTo: event.target.value }))}><option value="">Sin asignar</option>{members.map((member) => <option key={member.user_id} value={member.user_id}>{getProfileName(member.profiles)}</option>)}</select></div><div className="task-edit-actions"><Button type="button" variant="ghost" onClick={() => setEditingId(null)} disabled={saving}>Cancelar</Button><Button type="submit" loading={saving}>Guardar cambios</Button></div></form></Drawer>
     <ConfirmDialog open={Boolean(confirmTask)} title="Eliminar tarea" message={confirmTask ? `¿Quieres eliminar «${confirmTask.title}»? Esta acción no se puede deshacer.` : ""} confirmLabel="Eliminar" onClose={() => setConfirmTask(null)} onConfirm={() => void handleDeleteConfirmed()} loading={deleting} />
