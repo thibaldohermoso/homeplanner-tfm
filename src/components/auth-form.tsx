@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/browser";
 import { AppNav } from "@/components/app-nav";
 import { safeNext } from "@/lib/utils/navigation";
 import { Logo } from "@/components/logo";
+import { Button, PasswordInput } from "@/components/ui/primitives";
 
 type AuthMode = "login" | "register";
 
@@ -53,17 +54,18 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     <><AppNav /><main className="auth-shell">
       <section className="auth-card">
         <Logo size="lg" className="auth-logo" />
-        <p className="eyebrow" style={{ marginTop: 32 }}>{isLogin ? "Bienvenido de nuevo" : "Empieza ahora"}</p>
+        <p className="eyebrow">{isLogin ? "Bienvenido de nuevo" : "Empieza ahora"}</p>
         <h1>{isLogin ? "Inicia sesión" : "Crea tu cuenta"}</h1>
         <p className="muted">Gestiona tu hogar junto a las personas que lo comparten.</p>
 
         <form className="form" onSubmit={handleSubmit}>
           {!isLogin && <div className="field"><label htmlFor="displayName">Nombre</label><input id="displayName" required value={displayName} onChange={(event) => setDisplayName(event.target.value)} autoComplete="name" /></div>}
           <div className="field"><label htmlFor="email">Email</label><input id="email" type="email" required value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" /></div>
-          <div className="field"><label htmlFor="password">Contraseña</label><input id="password" type="password" required minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={isLogin ? "current-password" : "new-password"} /></div>
-          {error && <div className="form-error" role="alert">{error}</div>}
+          <div className="field"><label htmlFor="password">Contraseña</label><PasswordInput id="password" aria-describedby={error ? "auth-error" : undefined} required minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={isLogin ? "current-password" : "new-password"} />
+            {error && <small id="auth-error" className="form-error" role="alert">{error}</small>}
+          </div>
           {success && <div className="form-success" role="status">{success}</div>}
-          <button className="button button-primary" disabled={loading}>{loading ? "Procesando…" : isLogin ? "Iniciar sesión" : "Crear cuenta"}</button>
+          <Button type="submit" loading={loading}>{loading ? "Procesando…" : isLogin ? "Iniciar sesión" : "Crear cuenta"}</Button>
         </form>
 
         <div className="auth-footer">

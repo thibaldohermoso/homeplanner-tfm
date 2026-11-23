@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createHousehold, joinHousehold } from "@/lib/services/households";
+import { Home, Users } from "lucide-react";
+import { Button, Card } from "@/components/ui/primitives";
 
 export function OnboardingForm() {
   const router = useRouter();
@@ -36,8 +38,8 @@ export function OnboardingForm() {
   return <>
     {error && <div className="form-error" role="alert">{error}</div>}
     <div className="grid onboarding-grid">
-      <section className="panel option-card"><p className="eyebrow">Primera opción</p><h2>Crea un hogar</h2><p className="muted">Serás el propietario y podrás invitar a otras personas.</p><form className="form" onSubmit={submitCreate}><div className="field"><label htmlFor="household-name">Nombre del hogar</label><input id="household-name" required minLength={1} maxLength={80} value={name} onChange={(event) => setName(event.target.value)} placeholder="Casa, Piso…" /></div><button className="button button-primary" disabled={loading !== null}>{loading === "create" ? "Creando…" : "Crear hogar"}</button></form></section>
-      <section className="panel option-card"><p className="eyebrow">Segunda opción</p><h2>Únete a un hogar</h2><p className="muted">Introduce el código que te ha compartido otra persona.</p><form className="form" onSubmit={submitJoin}><div className="field"><label htmlFor="invite-code">Código de invitación</label><input id="invite-code" required maxLength={8} value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} placeholder="A1B2C3D4" /></div><button className="button button-secondary" disabled={loading !== null}>{loading === "join" ? "Uniéndote…" : "Unirme al hogar"}</button></form></section>
+      <Card className="option-card"><span className="section-icon"><Home size={22} aria-hidden="true" /></span><h2>Crea un hogar</h2><p className="muted">Serás el propietario y podrás invitar a otras personas.</p><form className="form" onSubmit={submitCreate}><div className="field"><label htmlFor="household-name">Nombre del hogar</label><input id="household-name" required minLength={1} maxLength={80} value={name} onChange={(event) => setName(event.target.value)} placeholder="Casa, Piso…" /></div><Button loading={loading === "create"} disabled={loading !== null}>{loading === "create" ? "Creando…" : "Crear hogar"}</Button></form></Card>
+      <Card className="option-card"><span className="section-icon"><Users size={22} aria-hidden="true" /></span><h2>Únete a un hogar</h2><p className="muted">Introduce el código que te ha compartido otra persona.</p><form className="form" onSubmit={submitJoin}><div className="field"><label htmlFor="invite-code">Código de invitación</label><input id="invite-code" required maxLength={8} value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} placeholder="A1B2C3D4" /></div><Button variant="secondary" loading={loading === "join"} disabled={loading !== null}>{loading === "join" ? "Uniéndote…" : "Unirme al hogar"}</Button></form></Card>
     </div>
   </>;
 }
