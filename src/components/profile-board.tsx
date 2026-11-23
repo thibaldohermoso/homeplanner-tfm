@@ -6,7 +6,7 @@ import { Copy, Crown, Download, Home, KeyRound, Mail, RefreshCw, Save, ShieldAle
 import { useRouter } from "next/navigation";
 import { AppNav } from "@/components/app-nav";
 import { InstallAppCard } from "@/components/install-app-card";
-import { Avatar, Button, Card, ConfirmDialog, EmptyState, Skeleton, Toast } from "@/components/ui/primitives";
+import { Avatar, Button, Card, ConfirmDialog, EmptyState, PageHeader, PageSkeleton, Toast } from "@/components/ui/primitives";
 import { signOut } from "@/lib/services/auth";
 import {
   getHouseholdsForProfile,
@@ -305,7 +305,7 @@ export function ProfileBoard({ canDeleteAccount }: { canDeleteAccount: boolean }
   }
 
   if (loading) {
-    return <><AppNav /><main className="shell page profile-page"><div className="profile-loading"><Skeleton width="150px" /><Skeleton width="280px" /><Skeleton width="100%" /></div></main></>;
+    return <><AppNav /><PageSkeleton label="Cargando perfil…" /></>;
   }
 
   if (!profile) return <><AppNav /><main className="shell page"><div className="form-error" role="alert">{error ?? "No se ha podido cargar el perfil."}</div></main></>;
@@ -313,10 +313,7 @@ export function ProfileBoard({ canDeleteAccount }: { canDeleteAccount: boolean }
   return <>
     <AppNav />
     <main className="shell page profile-page">
-      <header className="profile-header">
-        <Avatar name={displayName} size="lg" />
-        <div><p className="eyebrow">Mi cuenta</p><h1>{displayName}</h1><p className="muted">{email}</p>{pendingEmail && <span className="badge badge-warning">Email pendiente de confirmar: {pendingEmail}</span>}</div>
-      </header>
+      <PageHeader eyebrow="Mi cuenta" title={displayName} description={<>{email}{pendingEmail && <span className="badge badge-warning profile-pending-email">Email pendiente de confirmar: {pendingEmail}</span>}</>} action={<Avatar name={displayName} size="lg" />} />
       {error && <div className="form-error profile-error" role="alert">{error}</div>}
       <div className="profile-layout">
         <nav className="profile-tabs" aria-label="Secciones de la cuenta">
