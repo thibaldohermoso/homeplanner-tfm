@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 import { AppNav } from "@/components/app-nav";
 import { safeNext } from "@/lib/utils/navigation";
+import { Logo } from "@/components/logo";
 
 type AuthMode = "login" | "register";
 
@@ -51,7 +52,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   return (
     <><AppNav /><main className="auth-shell">
       <section className="auth-card">
-        <div className="brand"><span className="brand-mark">⌂</span> HomePlanner</div>
+        <Logo size="lg" className="auth-logo" />
         <p className="eyebrow" style={{ marginTop: 32 }}>{isLogin ? "Bienvenido de nuevo" : "Empieza ahora"}</p>
         <h1>{isLogin ? "Inicia sesión" : "Crea tu cuenta"}</h1>
         <p className="muted">Gestiona tu hogar junto a las personas que lo comparten.</p>
