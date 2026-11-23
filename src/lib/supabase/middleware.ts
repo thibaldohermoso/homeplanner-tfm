@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isPwaPublicPath } from "@/lib/utils/pwa";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -19,6 +20,7 @@ export async function updateSession(request: NextRequest) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
+  if (isPwaPublicPath(request.nextUrl.pathname)) return response;
   const isPublicRoute = ["/login", "/register", "/forgot-password", "/auth/callback"].includes(request.nextUrl.pathname);
 
   if (!user && !isPublicRoute) {

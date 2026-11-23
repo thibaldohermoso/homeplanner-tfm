@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Copy, Crown, Home, KeyRound, Mail, RefreshCw, Save, ShieldAlert, UserRound, Users } from "lucide-react";
+import { Copy, Crown, Download, Home, KeyRound, Mail, RefreshCw, Save, ShieldAlert, UserRound, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AppNav } from "@/components/app-nav";
+import { InstallAppCard } from "@/components/install-app-card";
 import { Avatar, Button, Card, ConfirmDialog, EmptyState, Skeleton, Toast } from "@/components/ui/primitives";
 import { signOut } from "@/lib/services/auth";
 import {
@@ -323,6 +324,7 @@ export function ProfileBoard({ canDeleteAccount }: { canDeleteAccount: boolean }
           <a href="#email-section"><Mail size={16} /> Email</a>
           <a href="#password-section"><KeyRound size={16} /> Contraseña</a>
           <a href="#household-section"><Home size={16} /> Hogar</a>
+          <a href="#install-section"><Download size={16} /> Instalar</a>
           <a href="#session-section"><ShieldAlert size={16} /> Sesión</a>
         </nav>
         <div className="profile-sections">
@@ -343,6 +345,8 @@ export function ProfileBoard({ canDeleteAccount }: { canDeleteAccount: boolean }
               <div className="profile-actions"><Button type="submit" variant="secondary" loading={savingEmail}><Mail size={16} /> Solicitar cambio</Button></div>
             </form>
           </Card>
+
+          <InstallAppCard />
 
           <Card className="profile-card">
             <div className="profile-card-header"><div><h2 id="password-section">Contraseña</h2><p className="muted">Primero comprobaremos tu contraseña actual.</p></div><KeyRound size={20} aria-hidden="true" /></div>
